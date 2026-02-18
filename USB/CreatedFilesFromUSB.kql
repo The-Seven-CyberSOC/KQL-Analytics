@@ -1,0 +1,20 @@
+let UsbMounts = DeviceEvents
+| where ActionType == "UsbDriveMounted"
+| extend ParsedFields = parse_json(AdditionalFields)
+| project MountTime = TimeGenerated, DeviceId, DriveLetter = tostring(ParsedFields.DriveLetter), SerialNumber = tostring(ParsedFields.SerialNumber), ProductName = tostring(ParsedFields.ProductName);
+DeviceFileEvents
+| where ActionType == "FileCreated"
+| where FolderPath !startswith "C:\\" and FolderPath !startswith "\\"
+| join kind=inner UsbMounts on DeviceId
+| where FolderPath startswith DriveLetter and TimeGenerated > MountTime
+| summarize arg_max(MountTime, *) by ReportId // Asocia cada archivo con la sesión de montaje más reciente
+| project
+    TimeGenerated,
+    DeviceName,
+    InitiatingProcessAccountName,
+    FileName,
+    FolderPath,
+    SHA256,
+    ProductName,
+    SerialNumber
+| order by TimeGenerated desc

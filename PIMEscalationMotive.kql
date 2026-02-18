@@ -1,0 +1,8 @@
+AuditLogs
+| where TimeGenerated > ago(10d) // Replace "ago(10d)" with how many days before to look up
+| where OperationName == "Add member to role requested (PIM activation)"
+| extend Role = tostring(TargetResources[0].displayName)
+| extend TicketNumber = tostring(AdditionalDetails[7].value)
+| extend User = tostring(parse_json(InitiatedBy.user).userPrincipalName)
+| summarize by ResultReason, User, Role, ActivityDateTime
+| order by ActivityDateTime

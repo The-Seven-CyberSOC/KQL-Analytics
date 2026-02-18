@@ -1,0 +1,6 @@
+DeviceNetworkEvents
+| where TimeGenerated between (datetime(2025-07-03 00:00:00) .. datetime(2025-07-03 23:59:59)) // Replace date range
+| where InitiatingProcessAccountName == "username"  // Replace with username
+| where RemoteUrl != "" and isnotempty(RemoteUrl)
+| project TimeGenerated, DeviceName, InitiatingProcessAccountName, RemoteUrl, InitiatingProcessFileName
+| order by TimeGenerated asc

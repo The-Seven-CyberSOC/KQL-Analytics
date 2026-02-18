@@ -1,0 +1,4 @@
+SigninLogs
+| where UserPrincipalName == "username@domain.com" // Replace with username
+| summarize SignInCount = count() by UserPrincipalName, AuthenticationRequirement, TimeGenerated, AppDisplayName,  ResultSignature, ResultDescription
+| order by SignInCount desc
