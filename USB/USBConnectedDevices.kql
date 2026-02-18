@@ -1,0 +1,58 @@
+DeviceFileEvents
+| where InitiatingProcessAccountName != "system"
+| where ActionType == "FileCreated"
+| where FolderPath !startswith "C:\\"
+| where FolderPath !startswith "\\"
+| project
+    ReportId,
+    DeviceId,
+    InitiatingProcessAccountDomain,
+    InitiatingProcessAccountName,
+    InitiatingProcessAccountUpn,
+    FileName,
+    FolderPath,
+    SHA256,
+    TimeGenerated,
+    SensitivityLabel,
+    IsAzureInfoProtectionApplied
+| join kind=inner (
+    DeviceEvents
+    | where ActionType == "UsbDriveMounted"
+    | extend ParsedFields = parse_json(AdditionalFields)
+    | extend SerialNumber = tostring(ParsedFields.SerialNumber),
+             Manufacturer = tostring(ParsedFields.Manufacturer),
+             ProductName = tostring(ParsedFields.ProductName),
+             DriveLetter = tostring(ParsedFields.DriveLetter)
+    | project
+        DeviceId,
+        DeviceName,
+        DriveLetter,
+        MountTime = TimeGenerated,
+        SerialNumber,
+        Manufacturer,
+        ProductName
+) on DeviceId
+| where FolderPath startswith DriveLetter
+| where TimeGenerated >= MountTime
+| summarize LatestMountTime = arg_max(MountTime, SerialNumber, Manufacturer, ProductName, DeviceName)
+    by ReportId,
+       InitiatingProcessAccountName,
+       InitiatingProcessAccountDomain
+| extend Time = format_datetime(LatestMountTime, "yyyy-MM-dd")
+| project
+    Time,
+    InitiatingProcessAccountName,
+    InitiatingProcessAccountDomain,
+    DeviceName,
+    SerialNumber,
+    Manufacturer,
+    ProductName,
+    LatestMountTime
+| summarize count() by
+    Time,
+    InitiatingProcessAccountName,
+    InitiatingProcessAccountDomain,
+    DeviceName,
+    SerialNumber,
+    Manufacturer,
+    ProductName

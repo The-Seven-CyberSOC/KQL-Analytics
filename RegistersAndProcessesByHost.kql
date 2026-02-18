@@ -1,0 +1,43 @@
+// Access registers and processes created for a host to identify any non-standard file transfer
+
+let alertTime = now();
+let targetDevice = "arolvd0mj05p678.lomanegra.root";
+let timeWindow = 48h;
+let processEvents = DeviceProcessEvents
+| where Timestamp between (alertTime - timeWindow .. alertTime + timeWindow)
+| where DeviceName has targetDevice
+| where InitiatingProcessFileName in~ (
+    "7z.exe", "rar.exe", "zip.exe", "tar.exe", "makecab.exe",
+    "ftp.exe", "scp.exe", "sftp.exe", "bitsadmin.exe", "curl.exe", "wget.exe"
+) or (InitiatingProcessFileName =~ "powershell.exe" and ProcessCommandLine has_any ("Invoke-WebRequest", "Start-BitsTransfer", "Copy-Item -ToSession"))
+| project
+    Timestamp,
+    DeviceName,
+    EventType = "ProcessCreated",
+    InitiatingProcess = InitiatingProcessFileName,
+    Process = FileName,
+    CommandLine = ProcessCommandLine,
+    Details = "A potential transfer/compresion tool was executed"
+| sort by Timestamp asc;
+let fileEvents = DeviceFileEvents
+| where Timestamp between (alertTime - timeWindow .. alertTime + timeWindow)
+| where DeviceName has targetDevice
+| where ActionType == "FileCreated" and (
+    FolderPath endswith ".zip" or
+    FolderPath endswith ".rar" or
+    FolderPath endswith ".7z" or
+    FolderPath endswith ".tar" or
+    FolderPath endswith ".gz" or
+    FolderPath endswith ".tgz"
+)
+| project
+    Timestamp,
+    DeviceName,
+    EventType = "FileCreated",
+    InitiatingProcess = InitiatingProcessFileName,
+    Process = "N/A",
+    CommandLine = "N/A",
+    Details = strcat("Se creó el archivo comprimido: ", FileName)
+| sort by Timestamp asc;
+union processEvents, fileEvents
+| sort by Timestamp asc

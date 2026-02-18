@@ -1,0 +1,4 @@
+DeviceTvmSoftwareInventory
+| where SoftwareName == "program.exe" // Replace with program name
+| project DeviceName, OSPlatform, OSVersion, SoftwareName, SoftwareVersion, SoftwareVendor
+| order by DeviceName asc

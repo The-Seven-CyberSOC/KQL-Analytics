@@ -1,0 +1,11 @@
+DeviceNetworkEvents
+| where RemoteUrl has "url.com" // Replace with URL
+| extend EventTime = TimeGenerated
+| join kind=inner (
+    DeviceLogonEvents
+    | project DeviceId, AccountName, LogonTime = TimeGenerated
+) on DeviceId
+| where abs(datetime_diff("minute", EventTime, LogonTime)) < 30
+| summarize VisitCount = count() by AccountName, bin(EventTime, 1d)
+| sort by EventTime asc, VisitCount desc
+| render columnchart with(title="Visitas Web Por Usuario", xtitle="Date", ytitle="Visit Count")
