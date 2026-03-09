@@ -1,0 +1,13 @@
+let RemoteTools = dynamic([
+"AnyDesk.exe",
+"TeamViewer.exe",
+"RustDesk.exe",
+"ScreenConnect.ClientService.exe",
+"UltraViewer.exe",
+"DWAgent.exe"
+]);
+DeviceProcessEvents
+| where FileName in (RemoteTools)
+| where TimeGenerated > ago(30d)
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+| sort by TimeGenerated desc
