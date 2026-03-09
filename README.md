@@ -44,11 +44,13 @@ The queries included in this repository can be used for:
 │   └── WebVisitedGroupedByVisitCount.kql
 │
 ├── DownloadedSoftware.kql
-├── KQL Queries_github.kql
+├── EmailAttachmentInfoSuspicious.kql
+├── EmailAttachmentInfoSuspicious.kql
 ├── PasswordChange.kql
 ├── PasswordChangeFollowedByBruteforce.kql
 ├── PIMEscalationMotive.kql
-└── RegistersAndProcessesByHost.kql
+├── RegistersAndProcessesByHost.kql
+└── RemoteToolsExecution.kql
 ```
 
 ---
@@ -115,12 +117,13 @@ Useful for:
 
 The repository also includes individual KQL queries focused on specific security scenarios:
 
-- **DownloadedSoftware.kql** – Identifies downloaded executables and software activity  
+- **DownloadedSoftware.kql** – Identifies downloaded executables and software activity
+- **EmailAttachedFiles_Suspicious** - Lists emails with attached files that contain extensions such as ".exe", ".js", ".iso", ".bat". It files that include macros such as ".docm" and "xlsm" can be uncommented
 - **PasswordChange.kql** – Tracks password modification events  
 - **PasswordChangeFollowedByBruteforce.kql** – Detects suspicious sequences involving password changes and brute force attempts  
 - **PIMEscalationMotive.kql** – Investigates privilege escalation patterns (e.g., PIM-related activity)  
 - **RegistersAndProcessesByHost.kql** – Correlates registry modifications and process activity per host  
-- **KQL Queries_github.kql** – Aggregated or reference queries  
+- **RemoteToolsExecution.kql** - Lists execution of Remote Desktop Applications like TeamViewer, Anydesk, RustDesk, ScreenConnect.ClientService, UltraViewer and DWAgent
 
 ---
 
