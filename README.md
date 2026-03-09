@@ -118,7 +118,7 @@ Useful for:
 The repository also includes individual KQL queries focused on specific security scenarios:
 
 - **DownloadedSoftware.kql** – Identifies downloaded executables and software activity
-- **EmailAttachedFiles_Suspicious** - Lists emails with attached files that contain extensions such as ".exe", ".js", ".iso", ".bat". It files that include macros such as ".docm" and "xlsm" can be uncommented
+- **EmailAttachedFiles_Suspicious** - Lists emails with attached files that contain extensions such as ".exe", ".js", ".iso", ".bat". It includes documents with macros such as ".docm" and "xlsm" that can be uncommented
 - **PasswordChange.kql** – Tracks password modification events  
 - **PasswordChangeFollowedByBruteforce.kql** – Detects suspicious sequences involving password changes and brute force attempts  
 - **PIMEscalationMotive.kql** – Investigates privilege escalation patterns (e.g., PIM-related activity)  
