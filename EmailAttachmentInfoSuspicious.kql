@@ -1,0 +1,10 @@
+EmailAttachmentInfo
+| where FileName endswith ".exe"
+    or FileName endswith ".js"
+    or FileName endswith ".iso"
+    // or FileName endswith ".docm" Uncomment only if interested in Word Documents with Macros
+    // or FileName endswith ".xlsm" Uncomment only if interested in Excel Documents with Macros
+    or FileName endswith ".bat"
+| where TimeGenerated > ago(30d)
+| project TimeGenerated, NetworkMessageId, SenderFromAddress, RecipientEmailAddress, FileName, FileType
+| sort by TimeGenerated desc
