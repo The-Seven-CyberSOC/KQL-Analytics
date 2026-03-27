@@ -43,6 +43,12 @@ The queries included in this repository can be used for:
 │   ├── WebVisitedByUser.kql
 │   └── WebVisitedGroupedByVisitCount.kql
 │
+├── VBS
+│   ├── ChangesFileOwnership.kql
+│   ├── RunsFromSuspiciousFolder.kql
+│   ├── RunsShell.kql
+│   └── StartsRemoteConnection.kql
+|
 ├── DownloadedSoftware.kql
 ├── EmailAttachmentInfoSuspicious.kql
 ├── EmailAttachmentInfoSuspicious.kql
@@ -59,41 +65,66 @@ The queries included in this repository can be used for:
 
 ### SharePointActivity
 
-Queries related to SharePoint file and folder activity:
+Detection queries focused on SharePoint file and folder activity:
 
-- Detection of deleted files  
-- File access tracking  
-- Folder operations monitoring  
+- File deletion events  
+- File access and interaction tracking  
+- Folder creation, modification, and deletion operations  
 
-Useful for auditing collaboration environments and detecting suspicious document handling.
+These queries are particularly useful for:
+
+- Auditing collaboration environments  
+- Detecting suspicious document handling  
+- Investigating potential data exfiltration or tampering
 
 ---
 
 ### SignIns
 
-Authentication-related queries:
+Detection queries related to authentication and account activity:
 
-- Sign-in attempts by user  
-- Account activity investigation  
+- User sign-in attempts and patterns  
+- Account activity investigation and correlation  
 
-Useful for identifying brute force attempts, anomalous login behavior, and account misuse.
+These queries are particularly useful for:
+
+- Identifying brute force or password spraying attacks  
+- Detecting anomalous login behavior (impossible travel, unusual locations)  
+- Investigating account compromise and misuse 
 
 ---
 
 ### USB
 
-Endpoint monitoring queries focused on removable media:
+Detection queries focused on removable media activity at the endpoint level:
 
-- USB device connections  
-- Files created from USB drives  
-- Files downloaded to/from USB  
-- Processes initiated from USB devices  
+- USB device connection events  
+- Files created or executed from USB devices  
+- File transfers to and from removable media  
+- Processes launched from USB-mounted paths  
 
 These queries are particularly useful for:
 
-- Data exfiltration detection  
-- Insider threat monitoring  
-- Investigating suspicious removable media activity  
+- Detecting data exfiltration via removable media  
+- Monitoring insider threat activity  
+- Investigating unauthorized device usage  
+- Tracing initial access vectors involving physical media 
+
+---
+
+### VBS
+
+Detection queries focused on browser and navigation activity:
+
+- Websites visited by users  
+- Navigation history correlated per user  
+- Visit frequency and domain patterns  
+
+These queries are particularly useful for:
+
+- Investigating access to malicious or risky domains  
+- Monitoring user browsing behavior during incidents  
+- Supporting threat hunting and timeline reconstruction  
 
 ---
 
