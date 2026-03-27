@@ -1,0 +1,8 @@
+DeviceProcessEvents
+| where TimeGenerated > ago(1d)
+| where FileName == "icacls.exe"
+| where ProcessCommandLine has_any ("/inheritance:r", "/remove", "/grant")
+| where not(ProcessCommandLine has @"\_MEI")
+| where AccountName != "system"
+| where not(ProcessCommandLine has_any ("Program Files","Windows\\System32"))
+| project TimeGenerated, DeviceName, AccountName, InitiatingProcessFileName, ProcessCommandLine
