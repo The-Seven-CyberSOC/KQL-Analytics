@@ -1,0 +1,5 @@
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where InitiatingProcessFileName in ("wscript.exe","cscript.exe")
+| where FileName in ("cmd.exe","powershell.exe","wmic.exe")
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessCommandLine

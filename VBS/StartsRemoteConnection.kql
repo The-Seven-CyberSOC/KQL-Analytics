@@ -1,0 +1,6 @@
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where InitiatingProcessFileName in ("wscript.exe","cscript.exe")
+| where RemoteUrl != ""
+| where RemoteUrl !contains "microsoft"
+| project TimeGenerated, InitiatingProcessAccountUpn, DeviceName, RemoteUrl, RemoteIP, InitiatingProcessCommandLine, ActionType

@@ -1,0 +1,4 @@
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where FileName in ("wscript.exe","cscript.exe")
+| where ProcessCommandLine has_any ("Downloads","Temp","AppData")
