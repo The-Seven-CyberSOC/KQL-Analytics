@@ -1,0 +1,21 @@
+// Searches web history of users who accesed a specific website and looks for any website in common visited in a 15 minute window
+
+let WebHits =
+DeviceNetworkEvents
+| where RemoteUrl has "maliciouswebsite.com" //Remplace with Malicious URL
+| project DeviceId, HitTime = TimeGenerated;
+WebHits
+| join kind=inner (
+    DeviceNetworkEvents
+    | project DeviceId,
+              SearchTime = TimeGenerated,
+              RemoteUrl
+) on DeviceId
+| where SearchTime between ((HitTime - 15m) .. (HitTime + 15m))
+| where RemoteUrl !has "maliciouswebsite.com" //Remplace with Malicious URL
+| summarize
+    Usuarios = dcount(DeviceId),
+    Equipos = make_set(DeviceId)
+    by RemoteUrl
+| where Usuarios > 1
+| order by Usuarios desc
