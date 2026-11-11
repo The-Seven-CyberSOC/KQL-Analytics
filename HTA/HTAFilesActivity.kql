@@ -1,0 +1,78 @@
+// Hunting: activity spawned by mshta.exe executing an .hta file
+// Chain: .hta -> mshta.exe -> child process / dropped files -> network
+let lookback = 1d;          // Start small, widen only if needed
+let htaFilter = "";         // Optional: specific .hta name, e.g. "invoice.hta"
+let MshtaExec = materialize(
+    DeviceProcessEvents
+    | where TimeGenerated > ago(lookback)
+    | where FileName =~ "mshta.exe"
+    | where ProcessCommandLine has ".hta"
+    | where htaFilter == "" or ProcessCommandLine has htaFilter
+    | project DeviceId, DeviceName, AccountName,
+              MshtaTime = TimeGenerated,
+              MshtaPid = ProcessId,
+              MshtaCreationTime = ProcessCreationTime,
+              MshtaCmd = ProcessCommandLine,
+              ParentProcess = InitiatingProcessFileName,
+              ParentCmd = InitiatingProcessCommandLine
+);
+let TargetDevices = toscalar(MshtaExec | summarize make_set(DeviceId));
+let MinTime = toscalar(MshtaExec | summarize min(MshtaTime));
+let Children = materialize(
+    DeviceProcessEvents
+    | where TimeGenerated >= MinTime
+    | where DeviceId in (TargetDevices)
+    | where InitiatingProcessFileName =~ "mshta.exe"
+    | join kind=inner (MshtaExec | project DeviceId, MshtaPid, MshtaCreationTime)
+        on DeviceId,
+           $left.InitiatingProcessId == $right.MshtaPid,
+           $left.InitiatingProcessCreationTime == $right.MshtaCreationTime
+    | project TimeGenerated, DeviceName, DeviceId,
+              ChildName = FileName, ChildPath = FolderPath,
+              ChildPid = ProcessId, ChildCreationTime = ProcessCreationTime,
+              ChildCmd = ProcessCommandLine, ChildSHA256 = SHA256
+);
+let ChainKeys = union
+    (MshtaExec | project DeviceId, ProcId = MshtaPid, ProcCreationTime = MshtaCreationTime),
+    (Children  | project DeviceId, ProcId = ChildPid, ProcCreationTime = ChildCreationTime)
+    | distinct DeviceId, ProcId, ProcCreationTime;
+let ChainPids = toscalar(ChainKeys | summarize make_set(ProcId));
+let FileActivity = DeviceFileEvents
+    | where TimeGenerated >= MinTime
+    | where DeviceId in (TargetDevices)
+    | where InitiatingProcessId in (ChainPids)
+    | where ActionType in ("FileCreated", "FileModified", "FileRenamed")
+    | join kind=inner ChainKeys
+        on DeviceId,
+           $left.InitiatingProcessId == $right.ProcId,
+           $left.InitiatingProcessCreationTime == $right.ProcCreationTime
+    | project TimeGenerated, DeviceName,
+              EventType = strcat("3-File (", ActionType, ")"),
+              Process = InitiatingProcessFileName,
+              Detail = FileName,
+              Extra = strcat("Path: ", FolderPath, " | SHA256: ", SHA256);
+let NetworkActivity = DeviceNetworkEvents
+    | where TimeGenerated >= MinTime
+    | where DeviceId in (TargetDevices)
+    | where InitiatingProcessId in (ChainPids)
+    | join kind=inner ChainKeys
+        on DeviceId,
+           $left.InitiatingProcessId == $right.ProcId,
+           $left.InitiatingProcessCreationTime == $right.ProcCreationTime
+    | project TimeGenerated, DeviceName,
+              EventType = "4-Network",
+              Process = InitiatingProcessFileName,
+              Detail = strcat(ActionType, " -> ", RemoteIP, ":", RemotePort),
+              Extra = strcat("URL: ", RemoteUrl, " | Path: ", InitiatingProcessFolderPath);
+union
+    (MshtaExec | project TimeGenerated = MshtaTime, DeviceName,
+        EventType = "1-mshta executed", Process = "mshta.exe",
+        Detail = MshtaCmd,
+        Extra = strcat("User: ", AccountName, " | Parent: ", ParentProcess, " | ", ParentCmd)),
+    (Children | project TimeGenerated, DeviceName,
+        EventType = "2-Child process", Process = ChildName,
+        Detail = ChildCmd,
+        Extra = strcat("Path: ", ChildPath, " | SHA256: ", ChildSHA256)),
+    FileActivity,
+    NetworkActivity
+| sort by DeviceName asc, TimeGenerated asc
